@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estratificación de Pacientes con IMID</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .patient-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 5px solid #3498db;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .block {
+            background: #ffffff;
+            border: 1px solid #e1e8ed;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .block-header {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .block-content {
+            padding: 20px;
+        }
+
+        .checkbox-group {
+            display: grid;
+            gap: 15px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .checkbox-item:hover {
+            background: #e9ecef;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            accent-color: #3498db;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            font-weight: 500;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .points {
+            background: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .score-display {
+            position: sticky;
+            top: 20px;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
+        }
+
+        .score-number {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .priority-1 {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .priority-2 {
+            background: #f39c12;
+            color: white;
+        }
+
+        .priority-3 {
+            background: #27ae60;
+            color: white;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .pathology-specific {
+            border-left: 5px solid #9b59b6;
+        }
+
+        .pathology-specific .block-header {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                border-radius: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                min-width: auto;
+            }
+
+            .score-number {
+                font-size: 28px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .checkbox-item {
+                padding: 10px;
+            }
+
+            .form-group input, .form-group select {
+                font-size: 14px;
+            }
+        }
+
+        .actions-panel {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .actions-panel h3 {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Estratificación de Pacientes con IMID</h1>
+            <p>Modelo de Estratificación de Pacientes con Enfermedades Inflamatorias Inmunomediadas</p>
+        </div>
+
+        <div class="content">
+            <!-- Información del paciente -->
+            <div class="patient-info">
+                <h3 style="margin-bottom: 15px; color: #2c3e50;">Identificación del Paciente</h3>
+                <div class="form-group">
+                    <label for="patientId">ID/Nombre del Paciente *</label>
+                    <input type="text" id="patientId" placeholder="Introduzca el identificador o nombre del paciente" required>
+                </div>
+                <div class="form-group">
+                    <label for="pathologyType">Tipo de Patología IMID *</label>
+                    <select id="pathologyType" required>
+                        <option value="">Seleccione el tipo de patología</option>
+                        <option value="dermatologica">Dermatológica</option>
+                        <option value="gastrointestinal">Gastro-intestinal</option>
+                        <option value="musculoesqueletica">Músculo-esquelética</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Puntuación actual -->
+            <div class="score-display">
+                <div class="score-number" id="totalScore">0</div>
+                <div>Puntuación Total</div>
+                <div class="priority-badge priority-3" id="priorityBadge">Prioridad 3</div>
+            </div>
+
+            <!-- Bloque 1: Variables Demográficas -->
+            <div class="block">
+                <div class="block-header">Bloque 1: Variables Demográficas</div>
+                <div class="block-content">
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="sexo" data-points="1">
+                            <label for="sexo">Mujer</label>
+                            <span class="points">1 pto</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="edad_12" data-points="1">
+                            <label for="edad_12">Edad ≤ 12 años (no recomendado en pediatría)</label>
+                            <span class="points">1 pto</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="edad_13_17" data-points="3">
+                            <label for="edad_13_17">13 ≤ Edad ≤ 17 años</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="edad_18_69" data-points="2">
+                            <label for="edad_18_69">18 ≤ Edad ≤ 69 años</label>
+                            <span class="points">2 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="edad_70" data-points="2">
+                            <label for="edad_70">Edad ≥ 70 años</label>
+                            <span class="points">2 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="obesidad" data-points="2">
+                            <label for="obesidad">Obesidad (IMC ≥30 kg/m²)</label>
+                            <span class="points">2 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="embarazada" data-points="3">
+                            <label for="embarazada">Paciente embarazada</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="deseo_embarazo" data-points="2">
+                            <label for="deseo_embarazo">Paciente con deseo de embarazo</label>
+                            <span class="points">2 ptos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloque 2: Variables Sociosanitarias -->
+            <div class="block">
+                <div class="block-header">Bloque 2: Variables Sociosanitarias y del Estado Cognitivo/Funcional</div>
+                <div class="block-content">
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="alcoholismo" data-points="3">
+                            <label for="alcoholismo">Alcoholismo y/o drogadicción</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="tabaquismo" data-points="2">
+                            <label for="tabaquismo">Tabaquismo</label>
+                            <span class="points">2 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="barreras_comunicacion" data-points="3">
+                            <label for="barreras_comunicacion">Paciente con barreras de comunicación</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="soporte_social" data-points="3">
+                            <label for="soporte_social">Paciente sin apoyo social o familiar</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="situacion_laboral" data-points="2">
+                            <label for="situacion_laboral">Paciente activo cuya actividad puede dificultar el tratamiento</label>
+                            <span class="points">2 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="calidad_vida" data-points="3">
+                            <label for="calidad_vida">El paciente ha disminuido su calidad de vida como consecuencia de la patología</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="antecedentes_psiquiatricos" data-points="3">
+                            <label for="antecedentes_psiquiatricos">Paciente con antecedentes psiquiátricos (depresión, estrés, ansiedad)</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="deterioro_cognitivo_dependencia" data-points="2">
+                            <label for="deterioro_cognitivo_dependencia">Deterioro cognitivo y dependencia funcional (Índices de Pfeiffer y Katz)</label>
+                            <span class="points">2 ptos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloque 3: Variables Clínicas -->
+            <div class="block">
+                <div class="block-header">Bloque 3: Variables Clínicas y de Utilización de Servicios Sanitarios</div>
+                <div class="block-content">
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comorbilidades" data-points="2">
+                            <label for="comorbilidades">El paciente tiene dos o más enfermedades crónicas además de la EI</label>
+                            <span class="points">2 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="insuficiencia_renal_hepatica" data-points="3">
+                            <label for="insuficiencia_renal_hepatica">Paciente con insuficiencia renal y/o hepática</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="multidisciplinariedad" data-points="3">
+                            <label for="multidisciplinariedad">El paciente es atendido por dos o más especialistas</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="hospitalizaciones" data-points="3">
+                            <label for="hospitalizaciones">El paciente ha tenido al menos un ingreso o una visita a urgencias en los últimos dos meses</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="actividad_enfermedad" data-points="3">
+                            <label for="actividad_enfermedad">El paciente tiene actividad de la EI moderada / alta</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloque 4: Variables de Tratamiento -->
+            <div class="block">
+                <div class="block-header">Bloque 4: Variables Relacionadas con el Tratamiento</div>
+                <div class="block-content">
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="paciente_naive" data-points="4">
+                            <label for="paciente_naive">Paciente NAÏVE a terapia de uso hospitalario</label>
+                            <span class="points">4 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="polimedicacion" data-points="3">
+                            <label for="polimedicacion">El paciente toma 6 o más medicamentos</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="modificacion_regimen" data-points="3">
+                            <label for="modificacion_regimen">Modificación régimen regular de la medicación en los últimos 6 meses</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="riesgo_medicacion" data-points="3">
+                            <label for="riesgo_medicacion">El paciente toma algún medicamento incluido en el listado del ISMP español de medicamentos de alto riesgo en hospitales</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="interacciones" data-points="3">
+                            <label for="interacciones">Existe riesgo de interacción farmacológica clínicamente relevante</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="intolerancia" data-points="3">
+                            <label for="intolerancia">Aparición de reacciones adversas en el último año</label>
+                            <span class="points">3 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="falta_adherencia" data-points="4">
+                            <label for="falta_adherencia">Existe sospecha o evidencia de que el paciente no es adherente a su tratamiento</label>
+                            <span class="points">4 ptos</span>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="seguimiento_adicional" data-points="2">
+                            <label for="seguimiento_adicional">Paciente con tratamiento recientemente comercializado (primer año de autorización)</label>
+                            <span class="points">2 ptos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Variables específicas por patología -->
+            <div id="pathologySpecific" class="hidden">
+                <!-- Dermatológicas -->
+                <div id="dermatologicasBlock" class="block pathology-specific hidden">
+                    <div class="block-header">Variables Específicas - Enfermedades Dermatológicas</div>
+                    <div class="block-content">
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="enf_cardiovascular_una" data-points="1">
+                                <label for="enf_cardiovascular_una">Enfermedad cardiovascular (1 comorbilidad)</label>
+                                <span class="points">1 pto</span>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="enf_cardiovascular_mas" data-points="2">
+                                <label for="enf_cardiovascular_mas">Enfermedad cardiovascular (más de 1 comorbilidad)</label>
+                                <span class="points">2 ptos</span>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="sindrome_metabolico_una" data-points="1">
+                                <label for="sindrome_metabolico_una">Síndrome metabólico (1 comorbilidad)</label>
+                                <span class="points">1 pto</span>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="sindrome_metabolico_mas" data-points="2">
+                                <label for="sindrome_metabolico_mas">Síndrome metabólico (más de 1 comorbilidad)</label>
+                                <span class="points">2 ptos</span>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="diabetes_una" data-points="1">
+                                <label for="diabetes_una">Diabetes (1 comorbilidad)</label>
+                                <span class="points">1 pto</span>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="diabetes_mas" data-points="2">
+                                <label for="diabetes_mas">Diabetes (más de 1 comorbilidad)</label>
+                                <span class="points">2 ptos</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gastro-intestinales -->
+                <div id="gastrointestinalBlock" class="block pathology-specific hidden">
+                    <div class="block-header">Variables Específicas - Enfermedades Gastro-intestinales</div>
+                    <div class="block-content">
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="obstruccion_intestinal" data-points="1">
+                                <label for="obstruccion_intestinal">Obstrucción intestinal, estenosis, fístulas y abscesos</label>
+                                <span class="points">1 pto</span>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="problemas_nutricionales" data-points="1">
+                                <label for="problemas_nutricionales">Problemas nutricionales relacionados con la mala absorción de proteínas, vitaminas o minerales</label>
+                                <span class="points">1 pto</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Músculo-esqueléticas -->
+                <div id="musculoesqueleticaBlock" class="block pathology-specific hidden">
+                    <div class="block-header">Variables Específicas - Enfermedades Músculo-esqueléticas</div>
+                    <div class="block-content">
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="capacidad_funcional" data-points="1">
+                                <label for="capacidad_funcional">El paciente presenta una disminución de la capacidad funcional o discapacidad debido a la EI músculo-esquelética</label>
+                                <span class="points">1 pto</span>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="dolor" data-points="1">
+                                <label for="dolor">El paciente presenta dolor</label>
+                                <span class="points">1 pto</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="buttons">
+                <button class="btn btn-primary" onclick="resetForm()">Reiniciar</button>
+                <button class="btn btn-success" onclick="generateJSON()">Generar JSON</button>
+                <button class="btn btn-info" onclick="generatePDF()" id="pdfBtn" style="display: none;">Generar PDF</button>
+                <button class="btn btn-info" id="actionsBtn" onclick="showActions()" style="display: none;">Ver Acciones de Atención Farmacéutica</button>
+            </div>
+
+            <!-- Panel de acciones -->
+            <div id="actionsPanel" class="actions-panel hidden">
+                <h3>Acciones de Atención Farmacéutica</h3>
+                <div id="actionsContent">
+                    <!-- Aquí se mostrarán las acciones específicas según el nivel de prioridad -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let totalScore = 0;
+        let currentPriority = 3;
+        let isPregnant = false;
+
+        // Listener para el tipo de patología
+        document.getElementById('pathologyType').addEventListener('change', function() {
+            const pathologyType = this.value;
+            const specificBlock = document.getElementById('pathologySpecific');
+            
+            // Ocultar todos los bloques específicos
+            document.getElementById('dermatologicasBlock').classList.add('hidden');
+            document.getElementById('gastrointestinalBlock').classList.add('hidden');
+            document.getElementById('musculoesqueleticaBlock').classList.add('hidden');
+            
+            if (pathologyType) {
+                specificBlock.classList.remove('hidden');
+                
+                // Mostrar el bloque correspondiente
+                if (pathologyType === 'dermatologica') {
+                    document.getElementById('dermatologicasBlock').classList.remove('hidden');
+                } else if (pathologyType === 'gastrointestinal') {
+                    document.getElementById('gastrointestinalBlock').classList.remove('hidden');
+                } else if (pathologyType === 'musculoesqueletica') {
+                    document.getElementById('musculoesqueleticaBlock').classList.remove('hidden');
+                }
+            } else {
+                specificBlock.classList.add('hidden');
+            }
+            
+            // Recalcular puntuación
+            calculateScore();
+        });
+
+        // Listeners para todos los checkboxes
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    // Manejar grupos mutuamente excluyentes (edad)
+                    if (this.id.startsWith('edad_')) {
+                        const ageCheckboxes = document.querySelectorAll('input[id^="edad_"]');
+                        ageCheckboxes.forEach(cb => {
+                            if (cb !== this) {
+                                cb.checked = false;
+                            }
+                        });
+                    }
+
+                    // Manejar grupos mutuamente excluyentes (comorbilidades específicas)
+                    if (this.id.includes('cardiovascular') || this.id.includes('metabolico') || this.id.includes('diabetes')) {
+                        const baseName = this.id.replace('_una', '').replace('_mas', '');
+                        const related = document.querySelector(`input[id="${baseName}_${this.id.includes('_una') ? 'mas' : 'una'}"]`);
+                        if (related && this.checked) {
+                            related.checked = false;
+                        }
+                    }
+
+                    calculateScore();
+                });
+            });
+        });
+
+        function calculateScore() {
+            totalScore = 0;
+            isPregnant = false;
+
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            checkboxes.forEach(checkbox => {
+                // Solo contar checkboxes que están visibles
+                if (!checkbox.closest('.hidden')) {
+                    const points = parseInt(checkbox.dataset.points) || 0;
+                    totalScore += points;
+
+                    // Verificar si está embarazada o desea embarazo
+                    if (checkbox.id === 'embarazada' || checkbox.id === 'deseo_embarazo') {
+                        isPregnant = true;
+                    }
+                }
+            });
+
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('totalScore').textContent = totalScore;
+            
+            // Determinar prioridad
+            if (isPregnant) {
+                currentPriority = 1;
+            } else if (totalScore >= 31) {
+                currentPriority = 1;
+            } else if (totalScore >= 18) {
+                currentPriority = 2;
+            } else {
+                currentPriority = 3;
+            }
+
+            const priorityBadge = document.getElementById('priorityBadge');
+            priorityBadge.className = `priority-badge priority-${currentPriority}`;
+            
+            if (currentPriority === 1) {
+                priorityBadge.textContent = isPregnant ? 'Prioridad 1 (Embarazo)' : 'Prioridad 1';
+            } else {
+                priorityBadge.textContent = `Prioridad ${currentPriority}`;
+            }
+
+            // Mostrar botón de acciones si hay una prioridad calculada
+            const actionsBtn = document.getElementById('actionsBtn');
+            const pdfBtn = document.getElementById('pdfBtn');
+            if (totalScore > 0 || isPregnant) {
+                actionsBtn.style.display = 'block';
+                pdfBtn.style.display = 'block';
+            } else {
+                actionsBtn.style.display = 'none';
+                pdfBtn.style.display = 'none';
+            }
+        }
+
+        function resetForm() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+            
+            document.getElementById('patientId').value = '';
+            document.getElementById('pathologyType').value = '';
+            document.getElementById('pathologySpecific').classList.add('hidden');
+            
+            totalScore = 0;
+            currentPriority = 3;
+            isPregnant = false;
+            
+            updateDisplay();
+            document.getElementById('actionsPanel').classList.add('hidden');
+        }
+
+        function getAllFormData() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                patient: {
+                    id: document.getElementById('patientId').value,
+                    pathologyType: document.getElementById('pathologyType').value
+                },
+                scores: {
+                    totalScore: totalScore,
+                    priority: currentPriority,
+                    isPregnancyException: isPregnant
+                },
+                variables: {
+                    demographic: {
+                        sexo: document.getElementById('sexo').checked,
+                        edad_12: document.getElementById('edad_12').checked,
+                        edad_13_17: document.getElementById('edad_13_17').checked,
+                        edad_18_69: document.getElementById('edad_18_69').checked,
+                        edad_70: document.getElementById('edad_70').checked,
+                        obesidad: document.getElementById('obesidad').checked,
+                        embarazada: document.getElementById('embarazada').checked,
+                        deseo_embarazo: document.getElementById('deseo_embarazo').checked
+                    },
+                    sociosanitary: {
+                        alcoholismo: document.getElementById('alcoholismo').checked,
+                        tabaquismo: document.getElementById('tabaquismo').checked,
+                        barreras_comunicacion: document.getElementById('barreras_comunicacion').checked,
+                        soporte_social: document.getElementById('soporte_social').checked,
+                        situacion_laboral: document.getElementById('situacion_laboral').checked,
+                        calidad_vida: document.getElementById('calidad_vida').checked,
+                        antecedentes_psiquiatricos: document.getElementById('antecedentes_psiquiatricos').checked,
+                        deterioro_cognitivo_dependencia: document.getElementById('deterioro_cognitivo_dependencia').checked
+                    },
+                    clinical: {
+                        comorbilidades: document.getElementById('comorbilidades').checked,
+                        insuficiencia_renal_hepatica: document.getElementById('insuficiencia_renal_hepatica').checked,
+                        multidisciplinariedad: document.getElementById('multidisciplinariedad').checked,
+                        hospitalizaciones: document.getElementById('hospitalizaciones').checked,
+                        actividad_enfermedad: document.getElementById('actividad_enfermedad').checked
+                    },
+                    treatment: {
+                        paciente_naive: document.getElementById('paciente_naive').checked,
+                        polimedicacion: document.getElementById('polimedicacion').checked,
+                        modificacion_regimen: document.getElementById('modificacion_regimen').checked,
+                        riesgo_medicacion: document.getElementById('riesgo_medicacion').checked,
+                        interacciones: document.getElementById('interacciones').checked,
+                        intolerancia: document.getElementById('intolerancia').checked,
+                        falta_adherencia: document.getElementById('falta_adherencia').checked,
+                        seguimiento_adicional: document.getElementById('seguimiento_adicional').checked
+                    },
+                    pathologySpecific: {}
+                }
+            };
+
+            // Agregar variables específicas según el tipo de patología
+            const pathologyType = document.getElementById('pathologyType').value;
+            
+            if (pathologyType === 'dermatologica') {
+                data.variables.pathologySpecific.dermatological = {
+                    enf_cardiovascular_una: document.getElementById('enf_cardiovascular_una').checked,
+                    enf_cardiovascular_mas: document.getElementById('enf_cardiovascular_mas').checked,
+                    sindrome_metabolico_una: document.getElementById('sindrome_metabolico_una').checked,
+                    sindrome_metabolico_mas: document.getElementById('sindrome_metabolico_mas').checked,
+                    diabetes_una: document.getElementById('diabetes_una').checked,
+                    diabetes_mas: document.getElementById('diabetes_mas').checked
+                };
+            } else if (pathologyType === 'gastrointestinal') {
+                data.variables.pathologySpecific.gastrointestinal = {
+                    obstruccion_intestinal: document.getElementById('obstruccion_intestinal').checked,
+                    problemas_nutricionales: document.getElementById('problemas_nutricionales').checked
+                };
+            } else if (pathologyType === 'musculoesqueletica') {
+                data.variables.pathologySpecific.musculoskeletal = {
+                    capacidad_funcional: document.getElementById('capacidad_funcional').checked,
+                    dolor: document.getElementById('dolor').checked
+                };
+            }
+
+            return data;
+        }
+
+        function generateJSON() {
+            const patientId = document.getElementById('patientId').value.trim();
+            const pathologyType = document.getElementById('pathologyType').value;
+
+            if (!patientId) {
+                alert('Por favor, introduzca el ID/Nombre del paciente');
+                return;
+            }
+
+            if (!pathologyType) {
+                alert('Por favor, seleccione el tipo de patología');
+                return;
+            }
+
+            const data = getAllFormData();
+            const jsonString = JSON.stringify(data, null, 2);
+            
+            // Crear y descargar el archivo JSON
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            // Nombre del archivo con timestamp
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const fileName = `estratificacion_${patientId.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}.json`;
+            
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert(`Archivo JSON generado: ${fileName}`);
+        }
+
+        function generatePDF() {
+            const patientId = document.getElementById('patientId').value.trim();
+            const pathologyType = document.getElementById('pathologyType').value;
+
+            if (!patientId) {
+                alert('Por favor, introduzca el ID/Nombre del paciente');
+                return;
+            }
+
+            if (!pathologyType) {
+                alert('Por favor, seleccione el tipo de patología');
+                return;
+            }
+
+            const data = getAllFormData();
+            
+            // Crear contenido del PDF
+            let pdfContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Estratificación IMID - ${patientId}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                        .header { text-align: center; border-bottom: 2px solid #2c3e50; padding-bottom: 20px; margin-bottom: 30px; }
+                        .header h1 { color: #2c3e50; margin-bottom: 10px; }
+                        .patient-info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                        .result-box { background: #e8f5e8; border: 2px solid #27ae60; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 30px; }
+                        .priority-1 { background: #ffe6e6; border-color: #e74c3c; }
+                        .priority-2 { background: #fff3e0; border-color: #f39c12; }
+                        .priority-3 { background: #e8f5e8; border-color: #27ae60; }
+                        .section { margin-bottom: 25px; }
+                        .section h3 { color: #2c3e50; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
+                        .variable { margin: 8px 0; padding: 5px; background: #f8f9fa; border-radius: 3px; }
+                        .variable.selected { background: #d4edda; border-left: 4px solid #28a745; }
+                        .points { font-weight: bold; color: #e74c3c; }
+                        .timestamp { text-align: center; color: #7f8c8d; font-size: 12px; margin-top: 30px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Estratificación de Pacientes con IMID</h1>
+                        <p>Modelo de Estratificación de Pacientes con Enfermedades Inflamatorias Inmunomediadas</p>
+                    </div>
+                    
+                    <div class="patient-info">
+                        <h3>Información del Paciente</h3>
+                        <p><strong>ID/Nombre:</strong> ${data.patient.id}</p>
+                        <p><strong>Tipo de Patología:</strong> ${getPathologyDisplayName(data.patient.pathologyType)}</p>
+                        <p><strong>Fecha de Estratificación:</strong> ${new Date(data.timestamp).toLocaleString('es-ES')}</p>
+                    </div>
+                    
+                    <div class="result-box priority-${data.scores.priority}">
+                        <h2>RESULTADO DE LA ESTRATIFICACIÓN</h2>
+                        <p style="font-size: 24px; margin: 10px 0;"><strong>Puntuación Total: ${data.scores.totalScore} puntos</strong></p>
+                        <p style="font-size: 20px; margin: 10px 0;"><strong>PRIORIDAD ${data.scores.priority}</strong></p>
+                        ${data.scores.isPregnancyException ? '<p style="color: #e74c3c;"><strong>* Asignación automática por embarazo</strong></p>' : ''}
+                        <p style="margin-top: 15px;">
+                            ${data.scores.priority === 1 ? 'ALTO RIESGO - Atención inmediata' : 
+                              data.scores.priority === 2 ? 'RIESGO MODERADO - Atención programada' : 
+                              'BAJO RIESGO - Seguimiento rutinario'}
+                        </p>
+                    </div>
+            `;
+
+            // Añadir secciones de variables
+            const sections = [
+                { key: 'demographic', title: 'Variables Demográficas', data: data.variables.demographic },
+                { key: 'sociosanitary', title: 'Variables Sociosanitarias y Cognitivo/Funcional', data: data.variables.sociosanitary },
+                { key: 'clinical', title: 'Variables Clínicas y de Utilización de Servicios', data: data.variables.clinical },
+                { key: 'treatment', title: 'Variables Relacionadas con el Tratamiento', data: data.variables.treatment }
+            ];
+
+            sections.forEach(section => {
+                pdfContent += `<div class="section"><h3>${section.title}</h3>`;
+                Object.entries(section.data).forEach(([key, value]) => {
+                    const points = getPointsForVariable(key);
+                    const label = getVariableLabel(key);
+                    pdfContent += `<div class="variable ${value ? 'selected' : ''}">${label} ${value ? `<span class="points">(+${points} pts)</span>` : ''}</div>`;
+                });
+                pdfContent += '</div>';
+            });
+
+            // Añadir variables específicas de patología si existen
+            if (Object.keys(data.variables.pathologySpecific).length > 0) {
+                pdfContent += `<div class="section"><h3>Variables Específicas de Patología</h3>`;
+                Object.entries(data.variables.pathologySpecific).forEach(([pathType, pathData]) => {
+                    Object.entries(pathData).forEach(([key, value]) => {
+                        const points = getPointsForVariable(key);
+                        const label = getVariableLabel(key);
+                        pdfContent += `<div class="variable ${value ? 'selected' : ''}">${label} ${value ? `<span class="points">(+${points} pts)</span>` : ''}</div>`;
+                    });
+                });
+                pdfContent += '</div>';
+            }
+
+            pdfContent += `
+                    <div class="timestamp">
+                        <p>Documento generado el ${new Date().toLocaleString('es-ES')}</p>
+                        <p>Sistema de Estratificación de Pacientes con IMID</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Crear y descargar el PDF
+            const blob = new Blob([pdfContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const fileName = `estratificacion_${patientId.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}.html`;
+            
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert(`Archivo HTML generado: ${fileName}\n\nPuede abrirlo en su navegador e imprimirlo como PDF usando Ctrl+P`);
+        }
+
+        function getPathologyDisplayName(type) {
+            const names = {
+                'dermatologica': 'Dermatológica',
+                'gastrointestinal': 'Gastro-intestinal',
+                'musculoesqueletica': 'Músculo-esquelética'
+            };
+            return names[type] || type;
+        }
+
+        function getPointsForVariable(variableId) {
+            const element = document.getElementById(variableId);
+            return element ? (parseInt(element.dataset.points) || 0) : 0;
+        }
+
+        function getVariableLabel(variableId) {
+            const labels = {
+                'sexo': 'Mujer',
+                'edad_12': 'Edad ≤ 12 años',
+                'edad_13_17': '13 ≤ Edad ≤ 17 años',
+                'edad_18_69': '18 ≤ Edad ≤ 69 años',
+                'edad_70': 'Edad ≥ 70 años',
+                'obesidad': 'Obesidad (IMC ≥30 kg/m²)',
+                'embarazada': 'Paciente embarazada',
+                'deseo_embarazo': 'Paciente con deseo de embarazo',
+                'alcoholismo': 'Alcoholismo y/o drogadicción',
+                'tabaquismo': 'Tabaquismo',
+                'barreras_comunicacion': 'Barreras de comunicación',
+                'soporte_social': 'Sin apoyo social o familiar',
+                'situacion_laboral': 'Actividad laboral que dificulta tratamiento',
+                'calidad_vida': 'Disminución de calidad de vida por patología',
+                'antecedentes_psiquiatricos': 'Antecedentes psiquiátricos',
+                'deterioro_cognitivo_dependencia': 'Deterioro cognitivo y dependencia funcional',
+                'comorbilidades': 'Dos o más enfermedades crónicas además de EI',
+                'insuficiencia_renal_hepatica': 'Insuficiencia renal y/o hepática',
+                'multidisciplinariedad': 'Atendido por dos o más especialistas',
+                'hospitalizaciones': 'Ingreso o urgencias en últimos 2 meses',
+                'actividad_enfermedad': 'Actividad de EI moderada/alta',
+                'paciente_naive': 'Paciente NAÏVE a terapia hospitalaria',
+                'polimedicacion': 'Polimedicación (≥6 medicamentos)',
+                'modificacion_regimen': 'Modificación de medicación (últimos 6 meses)',
+                'riesgo_medicacion': 'Medicamentos de alto riesgo',
+                'interacciones': 'Riesgo de interacción farmacológica',
+                'intolerancia': 'Reacciones adversas (último año)',
+                'falta_adherencia': 'Falta de adherencia al tratamiento',
+                'seguimiento_adicional': 'Tratamiento recientemente comercializado',
+                'enf_cardiovascular_una': 'Enfermedad cardiovascular (1 comorbilidad)',
+                'enf_cardiovascular_mas': 'Enfermedad cardiovascular (>1 comorbilidad)',
+                'sindrome_metabolico_una': 'Síndrome metabólico (1 comorbilidad)',
+                'sindrome_metabolico_mas': 'Síndrome metabólico (>1 comorbilidad)',
+                'diabetes_una': 'Diabetes (1 comorbilidad)',
+                'diabetes_mas': 'Diabetes (>1 comorbilidad)',
+                'obstruccion_intestinal': 'Obstrucción intestinal, estenosis, fístulas y abscesos',
+                'problemas_nutricionales': 'Problemas nutricionales',
+                'capacidad_funcional': 'Disminución capacidad funcional/discapacidad',
+                'dolor': 'Presencia de dolor'
+            };
+            return labels[variableId] || variableId;
+        }
+
+        function showActions() {
+            const actionsPanel = document.getElementById('actionsPanel');
+            const actionsContent = document.getElementById('actionsContent');
+            
+            let actionsText = '';
+            
+            switch(currentPriority) {
+                case 1:
+                    actionsText = `
+                        <h4>PRIORIDAD 1 - Acciones de Atención Farmacéutica</h4>
+                        <p><strong>Nivel de Riesgo:</strong> Alto</p>
+                        <p><strong>Puntuación:</strong> ${totalScore} puntos ${isPregnant ? '(Excepción por embarazo)' : ''}</p>
+                        
+                        <div style="margin-top: 20px;">
+                            <h5 style="color: #2c3e50; margin-bottom: 10px;">📋 Seguimiento Farmacoterapéutico</h5>
+                            <ul style="margin-left: 20px; line-height: 1.5;">
+                                <li>Revisión, validación y conciliación del tratamiento completo tanto para la EI como para la medicación concomitante (automedicación, medicina alternativa, etc.), monitorización de todas las posibles interacciones, ofreciendo al clínico una alternativa terapéutica para la medicación concomitante. Esta actuación se propone que se lleve a cabo en todos los pacientes inicialmente, en caso de que existan cambios en el tratamiento y en todas las visitas de seguimiento.</li>
+                                <li>Control de la adherencia y desarrollo de intervenciones específicas orientadas a mejorarla en pacientes con baja adherencia.</li>
+                                <li>Seguimiento adaptado a las necesidades del paciente y al criterio del farmacéutico, coordinando la siguiente visita a la Unidad de Pacientes Externos del servicio de farmacia con la siguiente visita a su médico o con el departamento de citaciones.</li>
+                                <li><strong>Desarrollo de un plan de acción entre niveles asistenciales para abordar las reacciones adversas al tratamiento y para resolver incidencias, mediante la definición de vías rápidas de comunicación permanente.</strong></li>
+                                <li><strong>A criterio del farmacéutico se establecerán objetivos a corto plazo según el Modelo CMO en consultas externas de Farmacia Hospitalaria.</strong></li>
+                            </ul>
+
+                            <h5 style="color: #2c3e50; margin: 20px 0 10px 0;">👨‍⚕️ Coordinación con el Equipo Asistencial</h5>
+                            <ul style="margin-left: 20px; line-height: 1.5;">
+                                <li>Unificación de criterios entre los diferentes profesionales sanitarios implicados en el tratamiento de estos pacientes (médico y enfermería) y niveles asistenciales (entre atención especializada, primaria y Oficina de farmacia) estableciendo un programa de actuación con todos los agentes implicados en el cuidado de un paciente tipo.</li>
+                                <li><strong>Definición de actuaciones consensuadas específicas para cada paciente entre los diferentes profesionales sanitarios de todos los niveles asistenciales implicados que se registren en la historia clínica del paciente.</strong></li>
+                                <li>Participación del FH en comités de biológicos.</li>
+                                <li><strong>Coordinación con los Servicios Sociales o con los Servicios de Psicología y Psiquiatría del centro hospitalario.</strong></li>
+                                <li>Colaboración con asociaciones de pacientes.</li>
+                                <li>Desarrollo de programas orientados a cumplir objetivos en relación a la farmacoterapia.</li>
+                                <li><strong>Realización de reuniones periódicas con los Servicios de Reumatología, Dermatología o Aparato Digestivo para la coordinación del equipo asistencial sobre indicadores de eficacia y adherencia del paciente.</strong></li>
+                            </ul>
+
+                            <h5 style="color: #2c3e50; margin: 20px 0 10px 0;">🎓 Formación, Educación y Seguimiento del Paciente</h5>
+                            <ul style="margin-left: 20px; line-height: 1.5;">
+                                <li><strong>Promoción de la adherencia (en pacientes con baja adherencia medición e intervenciones específicas)</strong></li>
+                                <li>Proporción de información y resolución de dudas relacionadas con:
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li>La enfermedad.</li>
+                                        <li>El tratamiento (posología, conservación del medicamento…), prevención y minimización de reacciones adversas, aportación de material personalizado (hoja de medicación personalizada).</li>
+                                        <li>Hábitos de vida saludable.</li>
+                                    </ul>
+                                </li>
+                                <li>Fomento de un paciente activo e informado, que se corresponsabilice en el resultado del tratamiento.</li>
+                                <li>Proporción de recursos web y apps con fin informativo.</li>
+                            </ul>
+                        </div>
+                    `;
+                    break;
+                case 2:
+                    actionsText = `
+                        <h4>PRIORIDAD 2 - Acciones de Atención Farmacéutica</h4>
+                        <p><strong>Nivel de Riesgo:</strong> Moderado</p>
+                        <p><strong>Puntuación:</strong> ${totalScore} puntos</p>
+                        
+                        <div style="margin-top: 20px;">
+                            <h5 style="color: #2c3e50; margin-bottom: 10px;">📋 Seguimiento Farmacoterapéutico</h5>
+                            <ul style="margin-left: 20px; line-height: 1.5;">
+                                <li>Revisión, validación y conciliación del tratamiento completo tanto para la EI como para la medicación concomitante (automedicación, medicina alternativa, etc.). Monitorización de todas las posibles interacciones, ofreciendo al clínico una alternativa terapéutica para la medicación concomitante. Esta actuación se propone que se lleve a cabo en todos los pacientes inicialmente, en caso de que existan cambios en el tratamiento y en todas las visitas de seguimiento.</li>
+                                <li>Control de la adherencia y desarrollo de intervenciones específicas orientadas a mejorarla en pacientes con baja adherencia.</li>
+                                <li>Seguimiento adaptado a las necesidades del paciente y al criterio del farmacéutico, coordinando la siguiente visita a la Unidad de Pacientes Externos del servicio de farmacia con la siguiente visita a su médico o con el departamento de citaciones.</li>
+                                <li>Promoción de la adherencia.</li>
+                            </ul>
+
+                            <h5 style="color: #2c3e50; margin: 20px 0 10px 0;">👨‍⚕️ Coordinación con el Equipo Asistencial</h5>
+                            <ul style="margin-left: 20px; line-height: 1.5;">
+                                <li>Unificación de criterios entre los diferentes profesionales sanitarios implicados en el tratamiento de estos pacientes (médico y enfermería) y niveles asistenciales (entre atención especializada, primaria y Oficina de farmacia), estableciendo un programa de actuación con todos los agentes implicados en el cuidado de un paciente tipo.</li>
+                                <li>Participación del FH en comités de biológicos.</li>
+                                <li>Colaboración con asociaciones de pacientes.</li>
+                                <li>Desarrollo de programas orientados a cumplir objetivos en relación a la farmacoterapia.</li>
+                                <li><strong>Coordinación con los Servicios Sociales o con los Servicios de Psicología y Psiquiatría del centro hospitalario.</strong></li>
+                                <li><strong>Definición de actuaciones consensuadas específicas para cada paciente entre los diferentes profesionales sanitarios de todos los niveles asistenciales implicados que se registren en la historia clínica del paciente.</strong></li>
+                            </ul>
+
+                            <h5 style="color: #2c3e50; margin: 20px 0 10px 0;">🎓 Formación, Educación y Seguimiento del Paciente</h5>
+                            <ul style="margin-left: 20px; line-height: 1.5;">
+                                <li>Proporción de información y resolución de dudas relacionadas con:
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li>La enfermedad.</li>
+                                        <li>El tratamiento (posología, conservación del medicamento…), prevención y minimización de reacciones adversas, aportación de material personalizado (hoja de medicación personalizada).</li>
+                                        <li>Hábitos de vida saludable.</li>
+                                    </ul>
+                                </li>
+                                <li>Fomento de un paciente activo e informado, que se corresponsabilice en el resultado del tratamiento.</li>
+                                <li>Proporción de recursos web y apps con fin informativo y de seguimiento de los pacientes mediante el uso de las nuevas tecnologías, aplicando programas de telefarmacia y de dispensación domiciliaria.</li>
+                            </ul>
+                        </div>
+                    `;
+                    break;
+                case 3:
+                    actionsText = `
+                        <h4>PRIORIDAD 3 - Acciones de Atención Farmacéutica</h4>
+                        <p><strong>Nivel de Riesgo:</strong> Bajo</p>
+                        <p><strong>Puntuación:</strong> ${totalScore} puntos</p>
+                        
+                        <div style="margin-top: 20px;">
+                            <h5 style="color: #2c3e50; margin-bottom: 10px;">📋 Seguimiento Farmacoterapéutico</h5>
+                            <ul style="margin-left: 20px; line-height: 1.5;">
+                                <li>Revisión, validación y conciliación del tratamiento completo tanto para la EI como para la medicación concomitante (automedicación, medicina alternativa, etc.). Monitorización de todas las posibles interacciones, ofreciendo al clínico una alternativa terapéutica para la medicación concomitante. Esta actuación se propone que se lleve a cabo en todos los pacientes inicialmente y en caso de que existan cambios en el tratamiento.</li>
+                                <li>Control de la adherencia y desarrollo de intervenciones específicas orientadas a mejorarla en pacientes con baja adherencia.</li>
+                                <li>Seguimiento adaptado a las necesidades del paciente y al criterio del farmacéutico, coordinación de la siguiente visita a la Unidad de Pacientes Externos del servicio de farmacia con la siguiente visita a su médico o con el departamento de citaciones.</li>
+                                <li>Promoción de la adherencia.</li>
+                            </ul>
+
+                            <h5 style="color: #2c3e50; margin: 20px 0 10px 0;">👨‍⚕️ Coordinación con el Equipo Asistencial</h5>
+                            <ul style="margin-left: 20px; line-height: 1.5;">
+                                <li>Unificación de criterios entre los diferentes profesionales sanitarios implicados en el tratamiento de estos pacientes (médico y enfermería) y niveles asistenciales (entre atención especializada, primaria y Oficina de farmacia), estableciendo un programa de actuación con todos los agentes implicados en el cuidado de un paciente tipo.</li>
+                                <li>Participación del FH en comités de biológicos.</li>
+                                <li>Colaboración con asociaciones de pacientes.</li>
+                                <li>Desarrollo de programas orientados a cumplir objetivos en relación a la farmacoterapia.</li>
+                            </ul>
+
+                            <h5 style="color: #2c3e50; margin: 20px 0 10px 0;">🎓 Formación, Educación y Seguimiento del Paciente</h5>
+                            <ul style="margin-left: 20px; line-height: 1.5;">
+                                <li>Proporción de información y resolución de dudas relacionadas con:
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li>La enfermedad.</li>
+                                        <li>El tratamiento (posología, conservación del medicamento…), prevención y minimización de reacciones adversas, aportación de material personalizado (hoja de medicación personalizada).</li>
+                                        <li>Hábitos de vida saludable.</li>
+                                    </ul>
+                                </li>
+                                <li>Fomento de un paciente activo e informado que se corresponsabilice en el resultado del tratamiento.</li>
+                                <li>Proporción de recursos web y apps con fin informativo y de seguimiento de los pacientes mediante el uso de las nuevas tecnologías, aplicando programas de telefarmacia y de dispensación domiciliaria.</li>
+                            </ul>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            actionsContent.innerHTML = actionsText;
+            actionsPanel.classList.remove('hidden');
+            
+            // Scroll hasta el panel de acciones
+            actionsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>
